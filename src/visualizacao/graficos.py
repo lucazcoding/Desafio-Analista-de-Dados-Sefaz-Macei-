@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 import pandas as pd
 import matplotlib
@@ -7,23 +6,18 @@ import matplotlib.pyplot as plt
 
 from src.visualizacao.utils_graficos import extrair_nome_capital
 
-matplotlib.use("Agg")
 
-
-def gerar_graficos(resultados: dict[str, pd.DataFrame], pasta_graficos: Path) -> None:
-    """Gera os 4 gráficos PNG a partir dos DataFrames das análises."""
-    pasta_graficos.mkdir(parents=True, exist_ok=True)
+def gerar_graficos(resultados: dict[str, pd.DataFrame]) -> None:
+    """Exibe os 4 gráficos na tela (sem salvar arquivo)."""
     plt.style.use("seaborn-v0_8-darkgrid")
 
-    _grafico_ranking_execucao(resultados["ranking"], pasta_graficos)
-    _grafico_per_capita(resultados["percapita"], pasta_graficos)
-    _grafico_evolucao_maceio(resultados["evolucao"], pasta_graficos)
-    _grafico_subfuncoes(resultados["subfuncoes"], pasta_graficos)
-
-    logging.info(f"Todos os gráficos salvos em '{pasta_graficos}'.")
+    _grafico_ranking_execucao(resultados["ranking"])
+    _grafico_per_capita(resultados["percapita"])
+    _grafico_evolucao_maceio(resultados["evolucao"])
+    _grafico_subfuncoes(resultados["subfuncoes"])
 
 
-def _grafico_ranking_execucao(df: pd.DataFrame, pasta: Path) -> None:
+def _grafico_ranking_execucao(df: pd.DataFrame) -> None:
     """Top 10 Capitais — Taxa de Execução em Educação."""
     df_plot = df.head(10).copy()
     df_plot["Capital"] = df_plot["Instituição"].apply(extrair_nome_capital)
@@ -41,12 +35,10 @@ def _grafico_ranking_execucao(df: pd.DataFrame, pasta: Path) -> None:
     ax.set_title("Top 10 Capitais — Taxa de Execução em Educação (2020-2024)", fontsize=14, fontweight="bold")
     ax.invert_yaxis()
     plt.tight_layout()
-    fig.savefig(pasta / "ranking_execucao.png", dpi=150)
-    plt.close(fig)
-    logging.info("  ✓ ranking_execucao.png salvo.")
+    plt.show()
 
 
-def _grafico_per_capita(df: pd.DataFrame, pasta: Path) -> None:
+def _grafico_per_capita(df: pd.DataFrame) -> None:
     """Top 10 Capitais — Gasto Per Capita em Educação (2024)."""
     df_plot = df.head(10).copy()
     df_plot["Capital"] = df_plot["Instituição"].apply(extrair_nome_capital)
@@ -64,12 +56,10 @@ def _grafico_per_capita(df: pd.DataFrame, pasta: Path) -> None:
     ax.set_title("Top 10 Capitais — Gasto Per Capita em Educação (2024)", fontsize=14, fontweight="bold")
     ax.invert_yaxis()
     plt.tight_layout()
-    fig.savefig(pasta / "per_capita.png", dpi=150)
-    plt.close(fig)
-    logging.info("  ✓ per_capita.png salvo.")
+    plt.show()
 
 
-def _grafico_evolucao_maceio(df: pd.DataFrame, pasta: Path) -> None:
+def _grafico_evolucao_maceio(df: pd.DataFrame) -> None:
     """Evolução Temporal — Maceió vs Média das Capitais."""
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -95,12 +85,10 @@ def _grafico_evolucao_maceio(df: pd.DataFrame, pasta: Path) -> None:
     ax.legend(fontsize=11)
     ax.set_xticks(df["Ano"])
     plt.tight_layout()
-    fig.savefig(pasta / "evolucao_maceio.png", dpi=150)
-    plt.close(fig)
-    logging.info("  ✓ evolucao_maceio.png salvo.")
+    plt.show()
 
 
-def _grafico_subfuncoes(df: pd.DataFrame, pasta: Path) -> None:
+def _grafico_subfuncoes(df: pd.DataFrame) -> None:
     """Composição de Subfunções da Educação (2024)."""
     df_plot = df.copy()
     df_plot["Conta_Limpa"] = df_plot["Conta"].str.strip()
@@ -119,6 +107,4 @@ def _grafico_subfuncoes(df: pd.DataFrame, pasta: Path) -> None:
                  fontsize=14, fontweight="bold")
     ax.invert_yaxis()
     plt.tight_layout()
-    fig.savefig(pasta / "subfuncoes.png", dpi=150)
-    plt.close(fig)
-    logging.info("  ✓ subfuncoes.png salvo.")
+    plt.show()

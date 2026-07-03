@@ -16,7 +16,6 @@ from src.utils.constantes import (
     PASTA_EXTRAIDOS,
     CAMINHO_PARQUET,
     CAMINHO_DUCKDB,
-    PASTA_GRAFICOS,
 )
 from src.utils.logger import configurar_logging
 from src.pipeline.extrair_zips import extrair_zips
@@ -95,9 +94,9 @@ def main() -> None:
 
     # --- 10. Graficos ---
     logging.info("=" * 60)
-    logging.info("ETAPA 10: GERANDO GRAFICOS")
+    logging.info("ETAPA 10: EXIBINDO GRAFICOS")
     logging.info("=" * 60)
-    gerar_graficos(resultados, PASTA_GRAFICOS)
+    gerar_graficos(resultados)
 
     # --- Resumo ---
     fim = time.time()

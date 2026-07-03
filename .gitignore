@@ -42,13 +42,11 @@ desktop.ini
 # .zip precisam estar no repositório (o Passo 1 do desafio é descompactá-los
 # por código).
 #
-# As saídas do pipeline (dados extraídos, DuckDB, gráficos) são geradas
+# As saídas do pipeline (dados extraídos, DuckDB) são geradas
 # a cada execução e não precisam ser versionadas.
 # ==========================================================================
 dados_extraidos/
 finbra.duckdb
-graficos/
-regioes.json
 
 # --- Documentos auxiliares (não versionar) --------------------------------
 .agents/
