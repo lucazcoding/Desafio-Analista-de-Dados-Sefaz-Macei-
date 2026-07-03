@@ -10,7 +10,7 @@ app = typer.Typer(
 
 @app.command()
 def build() -> None:
-    """Executa o pipeline ETL completo (extrair, consolidar, validar, parquet, duckdb)."""
+    """Executa o pipeline ETL completo (extrair, consolidar, validar, parquet, duckdb). Exemplo no terminal: python main.py build"""
     build_pipeline()
 
 
@@ -20,17 +20,17 @@ def analyze(
         help="Nome da analise: taxa, percapita, evolucao, subfuncoes"
     ),
 ) -> None:
-    """Executa uma analise especifica e exibe o resultado."""
+    """Executa uma analise especifica e exibe o resultado. Exemplo no terminal: python main.py analyze taxa | percapita | evolucao | subfuncoes"""
     run_analysis(nome)
 
 
 @app.command()
 def analyses() -> None:
-    """Lista todas as analises disponiveis."""
+    """Lista todas as analises disponiveis. Exemplo no terminal: python main.py analyses"""
     list_analyses()
 
 
 @app.command()
 def run() -> None:
-    """Executa todas as analises e exibe os resultados."""
+    """Executa todas as analises e exibe os resultados. Exemplo no terminal: python main.py run"""
     run_all()

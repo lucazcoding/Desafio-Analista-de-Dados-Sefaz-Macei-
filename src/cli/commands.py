@@ -14,12 +14,25 @@ from src.pipeline.validar_dados import validar_dataframe
 from src.pipeline.persistir_dados import salvar_em_parquet
 from src.banco.conexao_duckdb import conectar
 from src.banco.criar_tabela import criar_view_finbra
+from src.visualizacao.graficos import (
+    _grafico_ranking_execucao,
+    _grafico_per_capita,
+    _grafico_evolucao_maceio,
+    _grafico_subfuncoes,
+)
 
 ANALISES_DISPONIVEIS = {
     "taxa": ("Taxa de Execucao em Educacao", "src.analises.taxa_execucao", "taxa_execucao"),
     "percapita": ("Gasto Per Capita em Educacao", "src.analises.gasto_percapita", "gasto_percapita"),
     "evolucao": ("Evolucao Temporal Maceio vs Media", "src.analises.evolucao_temporal", "evolucao_temporal"),
     "subfuncoes": ("Composicao de Subfuncoes da Educacao", "src.analises.composicao_subfuncoes", "composicao_subfuncoes"),
+}
+
+GRAFICOS_DISPONIVEIS = {
+    "taxa": _grafico_ranking_execucao,
+    "percapita": _grafico_per_capita,
+    "evolucao": _grafico_evolucao_maceio,
+    "subfuncoes": _grafico_subfuncoes,
 }
 
 
@@ -69,6 +82,9 @@ def run_analysis(nome: str) -> None:
 
     print(f"\n>>> {descricao.upper()}")
     print(df.to_string(index=False))
+
+    grafico_func = GRAFICOS_DISPONIVEIS[nome]
+    grafico_func(df)
 
 
 def run_all() -> None:
