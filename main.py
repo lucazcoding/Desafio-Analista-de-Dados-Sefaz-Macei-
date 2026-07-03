@@ -38,8 +38,6 @@ from helpers.analises import (
     analise_evolucao_maceio,
     analise_composicao_subfuncoes,
 )
-from helpers.gerar_tabelas import gerar_tabelas
-
 # ---------------------------------------------------------------------------
 # Constantes — caminhos relativos à raiz do projeto
 # ---------------------------------------------------------------------------
@@ -49,7 +47,6 @@ PASTA_EXTRAIDOS = DIRETORIO_BASE / "dados_extraidos"
 CAMINHO_PARQUET = PASTA_EXTRAIDOS / "finbra_consolidado.parquet"
 CAMINHO_DUCKDB = DIRETORIO_BASE / "finbra.duckdb"
 PASTA_GRAFICOS = DIRETORIO_BASE / "graficos"
-PASTA_TABELAS = DIRETORIO_BASE / "tabelas"
 
 
 # ===========================================================================
@@ -201,14 +198,6 @@ def etapa_graficos(resultados: dict[str, pd.DataFrame]) -> None:
     logging.info(f"Todos os gráficos salvos em '{PASTA_GRAFICOS}'.")
 
 
-def etapa_tabelas(resultados: dict[str, pd.DataFrame]) -> None:
-    """Gera tabelas HTML estilizadas para cada análise."""
-    logging.info("=" * 60)
-    logging.info("ETAPA EXTRA: GERANDO TABELAS HTML")
-    logging.info("=" * 60)
-    gerar_tabelas(resultados, PASTA_TABELAS)
-    logging.info(f"Tabelas HTML salvas em '{PASTA_TABELAS}/'.")
-
 
 # ===========================================================================
 # Funções de geração de gráficos (privadas)
@@ -356,9 +345,6 @@ def main() -> None:
 
     # Etapa 10: Gráficos
     etapa_graficos(resultados)
-
-    # Tabelas HTML
-    etapa_tabelas(resultados)
 
     # Tempo total
     fim_total = time.time()
