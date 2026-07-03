@@ -49,3 +49,10 @@ dados_extraidos/
 finbra.duckdb
 graficos/
 regioes.json
+
+# --- Documentos auxiliares (não versionar) --------------------------------
+.agents/
+MISSÕES.txt
+PASSOS-RECOMENDADOS
+ANOTAÇÕES.md
+VALIDACOES_DECISOES.md
