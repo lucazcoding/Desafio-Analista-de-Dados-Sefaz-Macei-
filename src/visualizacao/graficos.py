@@ -20,14 +20,18 @@ def gerar_graficos(resultados: dict[str, pd.DataFrame]) -> None:
 def _grafico_ranking_execucao(df: pd.DataFrame) -> None:
     """Resposta: Quais capitais têm MAIOR eficiência na execução orçamentária de educação?
 
-    Métrica: Taxa de Execução = (Despesas Pagas / Empenhadas) × 100
-    Período: 2020-2024 (média acumulada por capital)
+    Métrica: Taxa de Execução = (Soma Pagas 2020-2024 / Soma Empenhadas 2020-2024) × 100
+    Agregação: Média ponderada por capital (total acumulado / total empenhado)
+    Período: 2020-2024 (acumulado por capital)
     Filtro: Apenas Função Educação (código 12)
+    n = {n_capitais} capitais
     """
+    n_capitais = len(df)
     df_plot = df.sort_values("Taxa_Execucao", ascending=False).head(10).copy()
     df_plot["Capital"] = df_plot["Instituição"].apply(extrair_nome_capital)
 
     media_nacional = df["Taxa_Execucao"].mean()
+    mediana_nacional = df["Taxa_Execucao"].median()
 
     fig, ax = plt.subplots(figsize=(12, 7))
 
@@ -38,13 +42,16 @@ def _grafico_ranking_execucao(df: pd.DataFrame) -> None:
         ax.text(barra.get_width() + 0.3, barra.get_y() + barra.get_height() / 2,
                 f"{valor:.1f}%", va="center", fontsize=10, fontweight="bold")
 
-    ax.axvline(x=media_nacional, color='red', linestyle='--', linewidth=2, label=f'Média Nacional: {media_nacional:.1f}%')
+    ax.axvline(x=media_nacional, color='red', linestyle='--', linewidth=2,
+               label=f'Média ({n_capitais} capitais): {media_nacional:.1f}%')
+    ax.axvline(x=mediana_nacional, color='gray', linestyle=':', linewidth=1.5,
+               label=f'Mediana: {mediana_nacional:.1f}%')
 
     ax.set_xlabel("Taxa de Execução (%)", fontsize=12)
     ax.set_title("Quais capitais são mais eficientes na execução orçamentária?\n"
-                 "Top 10 por Taxa de Execução em Educação (2020-2024)",
+                 "Top 10 por Taxa de Execução em Educação (2020-2024, acumulado)",
                  fontsize=14, fontweight="bold")
-    ax.legend(fontsize=11)
+    ax.legend(fontsize=10, loc='lower right')
     ax.invert_yaxis()
     plt.tight_layout()
     plt.show()
@@ -53,14 +60,18 @@ def _grafico_ranking_execucao(df: pd.DataFrame) -> None:
 def _grafico_per_capita(df: pd.DataFrame) -> None:
     """Resposta: Quais capitais mais INVESTEM por habitante em educação?
 
-    Métrica: Gasto Per Capita = Total Pago / População
+    Métrica: Gasto Per Capita = Total Pago 2024 / População
+    Agregação: Soma total de despesas pagas dividida pela população
     Período: 2024 (ano mais recente disponível)
     Filtro: Apenas Função Educação (código 12)
+    n = {n_capitais} capitais
     """
+    n_capitais = len(df)
     df_plot = df.sort_values("Per_Capita", ascending=False).head(10).copy()
     df_plot["Capital"] = df_plot["Instituição"].apply(extrair_nome_capital)
 
     media_nacional = df["Per_Capita"].mean()
+    mediana_nacional = df["Per_Capita"].median()
 
     fig, ax = plt.subplots(figsize=(12, 7))
 
@@ -71,13 +82,16 @@ def _grafico_per_capita(df: pd.DataFrame) -> None:
         ax.text(barra.get_width() + 10, barra.get_y() + barra.get_height() / 2,
                 f"R$ {valor:,.2f}", va="center", fontsize=10, fontweight="bold")
 
-    ax.axvline(x=media_nacional, color='red', linestyle='--', linewidth=2, label=f'Média Nacional: R$ {media_nacional:,.2f}')
+    ax.axvline(x=media_nacional, color='red', linestyle='--', linewidth=2,
+               label=f'Média ({n_capitais} capitais): R$ {media_nacional:,.2f}')
+    ax.axvline(x=mediana_nacional, color='gray', linestyle=':', linewidth=1.5,
+               label=f'Mediana: R$ {mediana_nacional:,.2f}')
 
     ax.set_xlabel("Gasto Per Capita (R$)", fontsize=12)
     ax.set_title("Quais capitais mais investem por habitante em educação?\n"
                  "Top 10 por Gasto Per Capita (2024)",
                  fontsize=14, fontweight="bold")
-    ax.legend(fontsize=11)
+    ax.legend(fontsize=10, loc='lower right')
     ax.invert_yaxis()
     plt.tight_layout()
     plt.show()
@@ -86,8 +100,8 @@ def _grafico_per_capita(df: pd.DataFrame) -> None:
 def _grafico_evolucao_maceio(df: pd.DataFrame) -> None:
     """Resposta: Maceió está MELHORANDO na execução orçamentária ao longo do tempo?
 
-    Métrica: Taxa de Execução = (Despesas Pagas / Empenhadas) × 100
-    Comparativo: Maceió vs Média das outras capitais
+    Métrica: Taxa de Execução = (Soma Pagas / Soma Empenhadas) × 100
+    Agregação: Maceió = taxa individual; Média = média de todas as outras 26 capitais (excluindo Maceió)
     Período: 2020-2024
     Filtro: Apenas Função Educação (código 12)
     """
@@ -96,7 +110,7 @@ def _grafico_evolucao_maceio(df: pd.DataFrame) -> None:
     ax.plot(df["Ano"], df["Taxa_Maceio"], marker="o", linewidth=2.5,
             label="Maceió", color="#1f77b4", markersize=8)
     ax.plot(df["Ano"], df["Taxa_Media_Outras"], marker="s", linewidth=2.5,
-            label="Média das Outras Capitais", color="#ff7f0e", markersize=8, linestyle="--")
+            label="Média das outras 26 capitais", color="#ff7f0e", markersize=8, linestyle="--")
 
     for _, row in df.iterrows():
         ax.annotate(f"{row['Taxa_Maceio']:.1f}%",
@@ -111,7 +125,7 @@ def _grafico_evolucao_maceio(df: pd.DataFrame) -> None:
     ax.set_xlabel("Ano", fontsize=12)
     ax.set_ylabel("Taxa de Execução (%)", fontsize=12)
     ax.set_title("Maceió está melhorando na execução orçamentária?\n"
-                 "Evolução 2020-2024 vs Média Nacional",
+                 "Evolução 2020-2024 vs Média das outras capitais (excluindo Maceió)",
                  fontsize=14, fontweight="bold")
     ax.legend(fontsize=11)
     ax.set_xticks(df["Ano"])
