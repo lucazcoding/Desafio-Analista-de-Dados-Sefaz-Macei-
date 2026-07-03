@@ -103,6 +103,9 @@ def run_all() -> None:
         print(f"\n>>> {descricao.upper()}")
         print(df.to_string(index=False))
 
+        grafico_func = GRAFICOS_DISPONIVEIS[nome]
+        grafico_func(df)
+
     con.close()
 
 
