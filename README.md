@@ -132,11 +132,11 @@ venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 pip install notebook        # Jupyter Notebook (necessario para rodar os notebooks)
 
-# Preparar dataset (primeira vez)
-jupyter notebook notebooks/1-Preparar_Dataset.ipynb
+instale a extensao **Jupyter** no VS Code
+navegue ate os arquivos .ipynb
+1-Preparar_Dataset.ipynb
+2-Analise.ipynb
 
-# Rodar analise
-jupyter notebook notebooks/2-Analise.ipynb
 ```
 
 > **Nota:** Se o comando `jupyter` nao for reconhecido, execute `pip install notebook` antes de tentar novamente. Para facilitar a execucao dos notebooks, instale a extensao **Jupyter** no VS Code (busque por "Jupyter" nas extensoes e instale a da Microsoft).
