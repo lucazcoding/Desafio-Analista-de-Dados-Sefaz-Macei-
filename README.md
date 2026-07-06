@@ -130,6 +130,7 @@ Natal aparece de forma consistente entre os piores desempenhos do ranking nas du
 python -m venv venv
 venv\Scripts\activate      # Windows
 pip install -r requirements.txt
+pip install notebook        # Jupyter Notebook (necessario para rodar os notebooks)
 
 # Preparar dataset (primeira vez)
 jupyter notebook notebooks/1-Preparar_Dataset.ipynb
@@ -137,6 +138,8 @@ jupyter notebook notebooks/1-Preparar_Dataset.ipynb
 # Rodar analise
 jupyter notebook notebooks/2-Analise.ipynb
 ```
+
+> **Nota:** Se o comando `jupyter` nao for reconhecido, significa que o pacote `notebook` nao esta instalado no ambiente. Execute `pip install notebook` antes de tentar novamente.
 
 ## Consideracoes finais
 
