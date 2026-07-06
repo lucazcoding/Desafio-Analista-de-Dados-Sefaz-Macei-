@@ -22,13 +22,8 @@ jupyter notebook
 
 | Notebook | O que faz |
 |----------|-----------|
-| `00_preparacao_dados.ipynb` | ETL completo: descompacta ZIPs, lê CSVs, enriquece, valida e carrega o DuckDB |
-| `01_calculo_indicadores.ipynb` | Calcula as 702 taxas de execução (26 capitais × 27 funções) |
-| `02_comparacao_capitais.ipynb` | Estatística descritiva por função: média, mediana, DP, CV |
-| `03_padroes_nacionais.ipynb` | Identifica capitais consistentes e funções problemáticas |
-| `04_casos.ipynb` | Seleciona os 3 estudos de caso: Goiânia, Maceió e Natal |
-| `05_aprofundamento.ipynb` | Aprofunda os 3 casos: evolução temporal e composição de subfunções |
-| `06_restos_a_pagar.ipynb` | Análise de Restos a Pagar: quem mais adia pagamentos? |
+| `1-Preparar_Dataset.ipynb` | ETL: descompacta ZIPs, classifica contas, consolida CSVs em Parquet + DuckDB |
+| `2-Analise.ipynb` | Análise da Taxa de Execução das capitais (2020-2024) |
 
 ---
 
@@ -55,19 +50,17 @@ jupyter notebook
 
 ```
 ├── requirements.txt           # Dependências
-├── notebooks/                 # Análises interativas (narrativa principal)
-│   ├── 00_preparacao_dados.ipynb    # ETL completo
-│   ├── 01_calculo_indicadores.ipynb
-│   ├── 02_comparacao_capitais.ipynb
-│   ├── 03_padroes_nacionais.ipynb
-│   ├── 04_casos.ipynb
-│   ├── 05_aprofundamento.ipynb
-│   └── 06_restos_a_pagar.ipynb
+├── notebooks/                 # Análises interativas
+│   ├── 1-Preparar_Dataset.ipynb    # ETL completo
+│   └── 2-Analise.ipynb             # Análise da Taxa de Execução
 ├── src/
 │   ├── banco/                 # Conexão DuckDB
 │   └── utils/                 # Constantes e utilitários
-└── data/
-    └── processed/             # Parquets intermediários
+├── dados_compactos/           # ZIPs originais do FINBRA
+├── dados_extraidos/           # CSVs descompactados
+├── data/
+│   └── processed/             # Parquets intermediários
+└── finbra.duckdb              # Banco DuckDB
 ```
 
 ---
