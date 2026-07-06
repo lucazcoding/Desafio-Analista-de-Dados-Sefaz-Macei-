@@ -143,6 +143,5 @@ jupyter notebook notebooks/2-Analise.ipynb
 
 ## Consideracoes finais
 
-- **2025 excluido:** Apenas 11 de 26 capitais declararam dados
 - **Desvio padrao amostral** (n-1): Trabalhamos com amostra de 26 capitais
 - **Padrao identificado:** A baixa execucao de Natal e concentrada em funcoes de investimento e desenvolvimento urbano (Urbanismo e Habitacao), enquanto areas de manutencao de servicos essenciais (Legislativa, Previdencia, Seguranca Publica) apresentam desempenho proximo ou acima da media
