@@ -1,6 +1,8 @@
+from pathlib import Path
 import duckdb
 
-con = duckdb.connect('C:/Users/corre/OneDrive/Área de Trabalho/Desafio-Analista-de-Dados-Sefaz-Macei-/finbra.duckdb')
+CAMINHO_DUCKDB = Path(__file__).parent / 'finbra.duckdb'
+con = duckdb.connect(str(CAMINHO_DUCKDB))
 
 # Verificar funções
 print("=== FUNÇÕES DISPONÍVEIS ===")
