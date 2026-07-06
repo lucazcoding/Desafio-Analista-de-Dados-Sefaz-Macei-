@@ -139,7 +139,7 @@ jupyter notebook notebooks/1-Preparar_Dataset.ipynb
 jupyter notebook notebooks/2-Analise.ipynb
 ```
 
-> **Nota:** Se o comando `jupyter` nao for reconhecido, significa que o pacote `notebook` nao esta instalado no ambiente. Execute `pip install notebook` antes de tentar novamente.
+> **Nota:** Se o comando `jupyter` nao for reconhecido, execute `pip install notebook` antes de tentar novamente. Para facilitar a execucao dos notebooks, instale a extensao **Jupyter** no VS Code (busque por "Jupyter" nas extensoes e instale a da Microsoft).
 
 ## Consideracoes finais
 
