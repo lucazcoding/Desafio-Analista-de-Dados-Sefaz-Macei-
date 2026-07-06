@@ -10,8 +10,6 @@ Análise de eficiência da execução orçamentária de **26 capitais brasileira
 
 ## 🚀 Como Reproduzir a Análise
 
-### Opção 1 — Via Jupyter Notebooks (Recomendado)
-
 Execute os notebooks **em ordem**. Cada um depende do anterior.
 
 ```bash
@@ -31,19 +29,6 @@ jupyter notebook
 | `04_casos.ipynb` | Seleciona os 3 estudos de caso: Goiânia, Maceió e Natal |
 | `05_aprofundamento.ipynb` | Aprofunda os 3 casos: evolução temporal e composição de subfunções |
 | `06_restos_a_pagar.ipynb` | Análise de Restos a Pagar: quem mais adia pagamentos? |
-
-### Opção 2 — Via CLI (Terminal)
-
-```bash
-# Executar pipeline ETL (equivalente ao Notebook 00)
-python main.py build
-
-# Executar análises individuais
-python main.py analyze taxa
-python main.py analyze percapita
-python main.py analyze evolucao
-python main.py analyze subfuncoes
-```
 
 ---
 
@@ -69,7 +54,6 @@ python main.py analyze subfuncoes
 ## 🏗️ Estrutura do Projeto
 
 ```
-├── main.py                    # Entry point CLI (Typer)
 ├── requirements.txt           # Dependências
 ├── notebooks/                 # Análises interativas (narrativa principal)
 │   ├── 00_preparacao_dados.ipynb    # ETL completo
@@ -80,11 +64,7 @@ python main.py analyze subfuncoes
 │   ├── 05_aprofundamento.ipynb
 │   └── 06_restos_a_pagar.ipynb
 ├── src/
-│   ├── cli/                   # Interface de linha de comando (Typer)
-│   ├── pipeline/              # ETL (extração, consolidação, validação)
 │   ├── banco/                 # Conexão DuckDB
-│   ├── analises/              # Módulos de análise SQL
-│   ├── visualizacao/          # Gráficos matplotlib
 │   └── utils/                 # Constantes e utilitários
 └── data/
     └── processed/             # Parquets intermediários
@@ -135,7 +115,6 @@ $$CV = \frac{Desvio\ Padrão}{Média} \times 100$$
 - **DuckDB** — Consultas SQL analíticas diretamente no Parquet
 - **Pandas** — Manipulação de dados
 - **Matplotlib** — Visualizações
-- **Typer** — CLI profissional
 - **PyArrow/Parquet** — Formato otimizado de armazenamento
 
 ---
