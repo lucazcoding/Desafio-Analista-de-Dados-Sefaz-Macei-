@@ -1,0 +1,781 @@
+================================================================================
+        GUIA COMPLETO DE ESTUDO — ANÁLISE DE DESPESAS PÚBLICAS
+        Desafio Analista de Dados — SEFAZ Maceió (2020-2024)
+        
+        Para qualquer pessoa conseguir ler, entender e explicar.
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ANTES DE COMEÇAR — GLOSSÁRIO RÁPIDO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EMPENHAR   = A prefeitura reserva/compromete o dinheiro para gastar numa área.
+             É a "promessa de gasto". Ex: "vamos gastar R$ 1 milhão em Saúde".
+
+PAGAR      = O dinheiro saiu de fato do caixa da prefeitura.
+             É o gasto real. Ex: "saíram R$ 950 mil do caixa para Saúde".
+
+FUNÇÃO     = Grande área de governo. Ex: Saúde (10), Educação (12),
+             Administração (04). Existem 27 funções no total.
+
+SUBFUNÇÃO  = Detalhe dentro da função.
+             Ex: dentro de Saúde → 10.301 Atenção Básica, 10.302 Hospitalar.
+
+CAPITAL    = As 26 prefeituras das capitais estaduais brasileiras.
+             Ex: Maceió, São Paulo, Fortaleza, Goiânia...
+
+PARQUET    = Formato de arquivo otimizado para guardar dados.
+             Lê muito mais rápido que CSV. Usado para economizar memória.
+
+DUCKDB     = Banco de dados que roda dentro do Python.
+             Permite escrever SQL direto nos arquivos Parquet.
+
+pp         = Pontos percentuais. Diferença entre duas porcentagens.
+             Ex: 98% - 94% = 4 pp (não 4%).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 1 — O OBJETIVO: O QUE ESTAMOS RESPONDENDO?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A pergunta central do desafio é:
+
+    "COMO as 26 capitais brasileiras gastam o dinheiro público
+     por área (função)?"
+
+"COMO" aqui não significa "quanto". Significa:
+    → Com que EFICIÊNCIA elas convertem promessas em pagamentos reais?
+    → Quem gerencia bem o orçamento? Quem deixa dinheiro parado?
+    → Quem está acima da média? Quem está abaixo?
+
+A resposta para isso está em UMA fórmula:
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │   Taxa de Execução = (Despesas Pagas ÷ Despesas            │
+    │                        Empenhadas) × 100                   │
+    │                                                             │
+    │   Resultado em %                                            │
+    │   100% = pagou TUDO que prometeu                            │
+    │   80%  = pagou só 80%, 20% ficou como resto a pagar        │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
+
+EXEMPLO CONCRETO — MACEIÓ EM SAÚDE (2020-2024):
+
+    Pago total      = R$ 1.200.000.000  (1,2 bilhão)
+    Empenhado total = R$ 1.225.000.000  (1,225 bilhão)
+
+    Taxa = (1.200.000.000 ÷ 1.225.000.000) × 100
+    Taxa = 0,9796 × 100
+    Taxa = 97,91%
+
+    Interpretação: Maceió pagou 97,91% do que prometeu gastar
+    em Saúde entre 2020 e 2024. Os 2,09% restantes ficaram
+    como restos a pagar — comprometidos mas não pagos no ano.
+
+SE O GESTOR PERGUNTAR "por que essa fórmula?":
+    Porque ela é o único indicador que responde ao mesmo tempo:
+    (1) quanto foi prometido, e (2) quanto foi cumprido.
+    Um gasto alto não significa eficiência — pode ser que a
+    prefeitura empenhasse o dobro e pagasse metade. A taxa
+    revela exatamente essa proporção.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 2 — ETAPA 1: CALCULANDO AS 702 TAXAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DECISÃO: Calcular a Taxa de Execução de todas as 26 capitais
+         em cada uma das 27 funções, no período de 2020 a 2024.
+
+Por que 702?
+    26 capitais × 27 funções = 702 combinações
+    Cada combinação gera uma taxa.
+
+────────────────────────────────────────────────────────────────
+DECISÃO 1: Por que usar 2020 a 2024 e não incluir 2025?
+────────────────────────────────────────────────────────────────
+
+    2025 tem dados de apenas 11 capitais (dados incompletos).
+    
+    Se eu incluísse 2025:
+        - 11 capitais teriam dados de 6 anos
+        - 15 capitais teriam dados de 5 anos
+        - A comparação seria injusta — como comparar
+          um time que jogou 6 partidas com outro que jogou 5.
+    
+    Solução: filtrar só 2020 a 2024 (anos completos).
+
+────────────────────────────────────────────────────────────────
+DECISÃO 2: Por que somar todos os anos juntos e não
+           calcular por ano separado?
+────────────────────────────────────────────────────────────────
+
+    OPÇÃO ERRADA — média das taxas anuais:
+        Taxa_2020 = 96%
+        Taxa_2021 = 94%
+        Taxa_2022 = 97%
+        Taxa_2023 = 95%
+        Taxa_2024 = 98%
+        Média = (96+94+97+95+98) ÷ 5 = 96%
+        
+        PROBLEMA: dá peso igual para cada ano, mesmo que
+        em 2021 o empenhado fosse 3x maior que em 2020.
+        Isso distorce o resultado.
+
+    OPÇÃO CORRETA — somar tudo junto:
+        Pago total   = Pago_2020 + Pago_2021 + ... + Pago_2024
+        Emp total    = Emp_2020  + Emp_2021  + ... + Emp_2024
+        Taxa = (Pago total ÷ Emp total) × 100
+        
+        Assim anos com mais dinheiro envolvido pesam
+        proporcionalmente mais. Matematicamente honesto.
+
+────────────────────────────────────────────────────────────────
+DECISÃO 3: Como calcular a TAXA GERAL de cada capital?
+────────────────────────────────────────────────────────────────
+
+    A Taxa Geral resume a eficiência de uma capital
+    considerando TODAS as funções juntas.
+
+    ERRADO — média simples das 27 taxas:
+        (taxa_saude + taxa_educacao + ... + taxa_27) ÷ 27
+        
+        PROBLEMA: Energia com R$ 5 milhões pesa igual a
+        Saúde com R$ 1,2 bilhão. Isso é injusto.
+
+    CORRETO — soma ponderada:
+        Taxa Geral = (Σ todo Pago) ÷ (Σ todo Empenhado) × 100
+        
+        Assim funções maiores pesam mais naturalmente.
+        Funções pequenas não distorcem o resultado.
+
+    RESULTADOS REAIS:
+        1º  Goiânia   98,06%
+        2º  ...
+        8º  Maceió    94,28%
+        ...
+        26º Natal     83,60%
+        
+        Média nacional = 92,41%
+        
+        Maceió está ACIMA da média nacional. ← bom sinal.
+        Mas acima da média não significa ser a melhor.
+        Precisamos entender QUANTO acima e em quais áreas.
+
+SE O GESTOR PERGUNTAR "por que não é média simples das taxas?":
+    Porque média simples trata todas as funções como iguais.
+    Uma função com R$ 5 milhões empenhados não pode ter o
+    mesmo peso que uma com R$ 1 bilhão. A soma total ponderada
+    resolve isso automaticamente — funções maiores influenciam
+    mais o resultado, que é exatamente o que faz sentido.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 3 — ETAPA 2: ESTATÍSTICA DESCRITIVA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEMA: temos 702 números. Sozinhos eles não contam história.
+SOLUÇÃO: usar 4 ferramentas estatísticas para enxergar padrões.
+
+════════════════════════════════════════════════════════════════
+FERRAMENTA 1 — MÉDIA
+════════════════════════════════════════════════════════════════
+
+    O que é: soma todos os valores e divide pela quantidade.
+    
+    Fórmula:
+        Média(Função) = Σ Taxas das 26 capitais ÷ 26
+    
+    Exemplo em Saúde:
+        Soma das 26 taxas = 2.467%
+        Média = 2.467 ÷ 26 = 94,88%
+    
+    Para que serve aqui:
+        Linha de referência nacional. Quem está acima
+        dela executa melhor que a média das capitais.
+    
+    LIMITAÇÃO: a média é sensível a valores extremos.
+    Se uma capital tem taxa de 20%, ela puxa a média
+    pra baixo mesmo que as outras 25 estejam em 95%.
+    É por isso que também calculamos a mediana.
+
+════════════════════════════════════════════════════════════════
+FERRAMENTA 2 — MEDIANA
+════════════════════════════════════════════════════════════════
+
+    O que é: o valor do meio quando ordenamos do menor
+    para o maior.
+    
+    Com 26 capitais:
+        Ordena as 26 taxas em ordem crescente
+        Mediana = (13ª taxa + 14ª taxa) ÷ 2
+    
+    Para que serve aqui:
+        Confirmar (ou desmentir) a média.
+        
+    REGRA DE OURO:
+        Se média ≈ mediana → distribuição equilibrada, sem outliers
+        Se média << mediana → existem capitais com taxas muito baixas
+                              puxando a média para baixo
+    
+    RESULTADO REAL — Ciência e Tecnologia:
+        Média   = 79,67%
+        Mediana = 89,24%
+        Diferença = -9,57 pp ← ALERTA de outlier!
+        
+        Interpretação: algumas capitais com taxas muito baixas
+        nessa função puxam a média para baixo. A mediana de
+        89,24% é o valor mais representativo do grupo.
+        
+        Quando a diferença > 5 pp, desconfiamos da média
+        e usamos a mediana como referência.
+
+════════════════════════════════════════════════════════════════
+FERRAMENTA 3 — DESVIO PADRÃO (DP)
+════════════════════════════════════════════════════════════════
+
+    O que é: mede o quanto as capitais se afastam da média
+    em média. Quanto maior, mais espalhadas estão as taxas.
+    
+    Fórmula (amostral, n-1):
+        DP = √ [ Σ(taxa_i - média)² ÷ (n-1) ]
+    
+    Por que n-1 e não n?
+        Porque temos uma AMOSTRA (26 capitais) e não a
+        população total. O n-1 corrige um viés estatístico
+        conhecido como "viés de estimação". Na prática,
+        o pandas usa n-1 por padrão no método .std().
+    
+    Exemplo em Previdência Social:
+        Média = 96%
+        Todas as capitais ficam entre 94% e 98%
+        DP = 1,8% → capitais muito parecidas entre si
+    
+    Exemplo em Ciência e Tecnologia:
+        Média = 79,67%
+        Capitais variam de 30% a 99%
+        DP = 23,7% → capitais muito diferentes entre si
+    
+    LIMITAÇÃO: o DP sozinho não permite comparar funções
+    com médias diferentes. É por isso que usamos o CV.
+
+════════════════════════════════════════════════════════════════
+FERRAMENTA 4 — COEFICIENTE DE VARIAÇÃO (CV)
+════════════════════════════════════════════════════════════════
+
+    O que é: dispersão expressa em percentual relativo
+    à média. Permite comparar funções de escalas diferentes.
+    
+    Fórmula:
+        CV = (DP ÷ Média) × 100
+    
+    Por que multiplicar por 100?
+        DP ÷ Média gera um número decimal (ex: 0,15).
+        Multiplicar por 100 transforma em percentual (15%).
+        Isso facilita leitura e comparação.
+    
+    Por que usar CV e não só o DP?
+    
+        Imagine dois jogadores de basquete:
+            Jogador A → média 30 pontos, DP = 3 pontos
+                CV = (3 ÷ 30) × 100 = 10%
+            Jogador B → média 10 pontos, DP = 3 pontos
+                CV = (3 ÷ 10) × 100 = 30%
+        
+        O DP dos dois é igual — 3 pontos.
+        Mas o Jogador B é MUITO mais imprevisível.
+        O CV revela isso. O DP absoluto não consegue.
+        
+        No nosso caso:
+            Saúde: DP = 3%, Média = 94,88%
+                CV = (3 ÷ 94,88) × 100 = 3,16% → homogênea
+            
+            Ciência e Tecnologia: DP = 23%, Média = 79,67%
+                CV = (23 ÷ 79,67) × 100 = 28,88% → heterogênea
+    
+    CLASSIFICAÇÃO DO CV:
+        CV < 15%        → Homogênea
+                          (capitais se comportam parecido)
+        15% ≤ CV < 30%  → Moderada
+                          (dispersão média)
+        CV ≥ 30%        → Heterogênea
+                          (capitais muito diferentes entre si)
+    
+    RESULTADOS REAIS:
+        Mais HOMOGÊNEA:   Previdência Social  CV = 2,38%
+                          → todas as capitais quase igual
+        Mais HETEROGÊNEA: Ciência e Tecnologia CV = 29,72%
+                          → algumas investem muito, outras quase nada
+
+────────────────────────────────────────────────────────────────
+RESULTADOS DA ETAPA 2 — RANKINGS POR FUNÇÃO
+────────────────────────────────────────────────────────────────
+
+    SAÚDE — Top 5 capitais:
+        1. Recife       98,97%
+        2. Porto Velho  98,64%
+        3. Belém        98,63%
+        4. Maceió       97,91%  ← Maceió está bem aqui
+        5. Goiânia      97,61%
+    
+    EDUCAÇÃO — Top 5 capitais:
+        1. Fortaleza    97,03%
+        2. Boa Vista    96,98%
+        3. Salvador     96,43%
+        4. Goiânia      96,17%
+        5. Porto Velho  95,84%
+        
+        → Maceió NÃO aparece no Top 10 de Educação.
+          Isso é uma PISTA importante para investigar.
+    
+    OUTLIERS ENCONTRADOS (média vs mediana):
+        Ciência e Tecnologia:  -9,57 pp → outlier grave
+        Relações Exteriores:   -8,40 pp → outlier significativo
+        Trabalho:              -7,03 pp → outlier moderado
+        
+        → Nessas 3 funções, usamos a MEDIANA como referência,
+          não a média.
+
+SE O GESTOR PERGUNTAR "o que é CV e por que você usou?":
+    CV é o Coeficiente de Variação. Ele divide o desvio
+    padrão pela média e multiplica por 100, gerando um
+    percentual que representa a dispersão relativa.
+    Usamos porque ele permite comparar a desigualdade
+    entre funções que têm médias muito diferentes —
+    coisa que o desvio padrão absoluto não consegue fazer.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 4 — ETAPA 3: IDENTIFICANDO PADRÕES NACIONAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEMA: saber quem está acima ou abaixo da média em UMA função
+          é fácil. Mas quem é consistentemente bom em VÁRIAS?
+SOLUÇÃO: classificar cada (capital, função) como "Acima" ou
+         "Abaixo" da média e contar quantas vezes cada capital
+         está acima.
+
+════════════════════════════════════════════════════════════════
+ALGORITMO — CLASSIFICAÇÃO ACIMA/ABAIXO
+════════════════════════════════════════════════════════════════
+
+    Para cada capital e cada função:
+        Se taxa > média nacional da função → "Acima da média"
+        Senão                             → "Abaixo da média"
+    
+    Depois:
+        % acima = (funções acima ÷ total funções válidas) × 100
+    
+    Por que "funções válidas" e não todas as 27?
+        Algumas capitais não empenharam nada em certas funções.
+        Ex: Maceió não tem gastos em Defesa Nacional ou
+        Relações Exteriores. Essas funções não entram no
+        cálculo — seria injusto penalizá-la por isso.
+    
+    MACEIÓ:
+        Funções acima da média: 13
+        Total de funções válidas: 19
+        % acima = (13 ÷ 19) × 100 = 68,42%
+
+    RESULTADOS REAIS — CAPITAIS MAIS CONSISTENTES:
+        1. Fortaleza  95,65% das funções acima da média
+        2. Belém      95,24%
+        3. Aracaju    95,00%
+        4. Recife     94,74%
+        5. Manaus     90,48%
+        ...
+        Maceió: 68,42% → faixa intermediária-alta
+    
+    FUNÇÕES MAIS PROBLEMÁTICAS (mais capitais abaixo da média):
+        1. Defesa Nacional     66,67%
+        2. Administração       50,00%
+        3. Saúde               50,00%
+        
+        → Saúde é problemática apesar de Maceió ir bem nela.
+          Isso significa que metade das capitais está abaixo
+          da média — a desigualdade nessa função é grande.
+
+════════════════════════════════════════════════════════════════
+SCATTER PLOT — EFICIÊNCIA vs CONSISTÊNCIA
+════════════════════════════════════════════════════════════════
+
+    O gráfico coloca cada capital num plano:
+    
+        Eixo X (horizontal) = Taxa Geral → eficiência total
+        Eixo Y (vertical)   = Desvio padrão anual → consistência
+        
+        Desvio padrão anual = DP das 5 taxas anuais
+                              (2020, 2021, 2022, 2023, 2024)
+                              
+        Por que usar CV aqui e não DP?
+            As 3 capitais operam em patamares diferentes.
+            Goiânia oscila em torno de 98%.
+            Natal oscila em torno de 83%.
+            Um DP de 3% significa coisas bem diferentes
+            para cada uma. O CV normaliza isso:
+            
+            CV = (DP ÷ Média) × 100
+            
+            CV < 5%  → consistente
+            CV 5-10% → oscilação moderada
+            CV > 10% → oscilante (varia muito entre anos)
+    
+    QUADRANTES DO SCATTER PLOT:
+        Superior esquerdo  → eficiência baixa, muito oscilante
+                             (problema grave)
+        Superior direito   → eficiência alta, oscilante
+                             (bom mas instável)
+        Inferior esquerdo  → eficiência baixa, consistente
+                             (ruim mas previsível)
+        Inferior direito   → eficiência alta, consistente
+                             (IDEAL — é onde Goiânia está)
+    
+    POSIÇÃO DOS 3 CASOS:
+        Goiânia → canto inferior direito (alta eficiência + consistente)
+        Maceió  → meio superior direito  (boa eficiência, moderada)
+        Natal   → canto superior esquerdo (baixa eficiência + oscilante)
+
+SE O GESTOR PERGUNTAR "como você identificou quem é consistente?":
+    Calculei para cada capital o desvio padrão das taxas
+    anuais de 2020 a 2024 — ou seja, o quanto a taxa variou
+    de um ano para o outro. Depois usei o Coeficiente de
+    Variação para normalizar essa dispersão em relação ao
+    próprio patamar de cada capital, permitindo comparação
+    justa entre Goiânia (que opera em ~98%) e Natal
+    (que opera em ~83%).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 5 — ETAPA 4: SELECIONANDO OS 3 ESTUDOS DE CASO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DECISÃO: selecionar 3 capitais para aprofundamento.
+
+    1. GOIÂNIA  → maior Taxa Geral (98,06%) → benchmark positivo
+    2. NATAL    → menor Taxa Geral (83,60%) → benchmark negativo
+    3. MACEIÓ   → sempre entra, independente de onde estiver
+                  (é a cidade do desafio e do avaliador)
+
+Por que esses 3 e não outros?
+    Comparar extremos revela padrões.
+    O que Goiânia faz que Natal não faz?
+    Onde Maceió está nesse espectro?
+    
+    Não faz sentido aprofundar todas as 26 capitais.
+    O objetivo é contar uma história — e histórias
+    têm protagonistas, não 26 personagens iguais.
+
+DIFERENÇAS EM PONTOS PERCENTUAIS:
+
+    Goiânia vs Maceió = 98,06 - 94,28 = 3,78 pp
+    Maceió  vs Natal  = 94,28 - 83,60 = 10,68 pp
+    Goiânia vs Natal  = 98,06 - 83,60 = 14,46 pp
+
+    Interpretação:
+    Maceió está 3,78 pp abaixo da melhor → gap pequeno,
+    alcançável com melhorias pontuais.
+    Maceió está 10,68 pp acima da pior → distância
+    confortável, não corre risco de cair para o fundo.
+    Maceió está mais perto de Goiânia do que de Natal.
+    Isso é positivo.
+
+SE O GESTOR PERGUNTAR "por que você escolheu o melhor e o pior?":
+    Porque o benchmarking — comparar com o melhor — revela
+    o que é possível alcançar. E comparar com o pior
+    mostra o que deve ser evitado. Maceió entre os dois
+    extremos permite contextualizar onde ela realmente
+    está no espectro nacional, sem ilusões e sem
+    pessimismo excessivo.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 6 — ETAPA 5: APROFUNDANDO OS 3 CASOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4 perguntas para cada caso:
+
+════════════════════════════════════════════════════════════════
+PERGUNTA 1 — Evolução temporal: Maceió melhorou ou piorou?
+════════════════════════════════════════════════════════════════
+
+    Calculamos a taxa por ANO (não acumulado):
+        TaxaAnual(Capital, Ano) = Pago_ano ÷ Empenhado_ano × 100
+    
+    RESULTADOS:
+        Goiânia: estável em alta (~98% todos os anos)
+        Maceió:  leve melhora (~93% → ~94% ao longo dos anos)
+        Natal:   leve melhora (~82% → ~84%)
+    
+    Variação percentual de Maceió:
+        Variação = (taxa_2024 - taxa_2020) ÷ taxa_2020 × 100
+        
+        Se taxa_2020 = 93% e taxa_2024 = 94%:
+        Variação = (94 - 93) ÷ 93 × 100 = +1,08%
+        
+        Maceió melhorou, mas lentamente.
+        Goiânia já está no teto e se mantém lá.
+        Natal melhorou mas continua distante.
+
+════════════════════════════════════════════════════════════════
+PERGUNTA 2 — Composição: onde o dinheiro concentra?
+════════════════════════════════════════════════════════════════
+
+    Fórmula de participação por subfunção:
+        Participação = (Pago subfunção ÷ Pago total da função) × 100
+    
+    Exemplo — Maceió em Saúde:
+        Pago Assistência Hospitalar = R$ X
+        Pago total Saúde Maceió     = R$ Y
+        Participação = (X ÷ Y) × 100 = 36,41%
+    
+    REGRA DE PARETO (80/20):
+        Em geral, poucas subfunções concentram a maior
+        parte do gasto. Verificamos se top 2-3 subfunções
+        representam ~80% do total.
+        
+        Maceió: Hospitalar (36%) + Adm Geral (21%) +
+                Ensino Fundamental (15%) = 72% já cobertos
+                por apenas 3 subfunções.
+    
+    COMPARAÇÃO — TOP 5 SUBFUNÇÕES (2024):
+    
+        GOIÂNIA:
+            Ensino Fundamental     26,14%  ← mais educação
+            Assistência Hospitalar 25,55%
+            Administração Geral    24,75%
+            Educação Infantil      13,27%
+            Atenção Básica          4,13%
+        
+        MACEIÓ:
+            Assistência Hospitalar 36,41%  ← mais saúde hospitalar
+            Administração Geral    21,49%
+            Ensino Fundamental     14,84%
+            Atenção Básica         13,52%
+            Educação Infantil      ~5,00%
+        
+        NATAL:
+            Assistência Hospitalar 34,62%
+            Administração Geral    27,00%  ← muito gasto adm.
+            Ensino Fundamental     17,97%
+            Educação Infantil       9,85%
+            Atenção Básica          4,46%
+
+════════════════════════════════════════════════════════════════
+PERGUNTA 3 — O que Goiânia faz diferente?
+════════════════════════════════════════════════════════════════
+
+    A diferença principal está na DISTRIBUIÇÃO do gasto:
+    
+    GOIÂNIA:
+        Investe 26,14% em Ensino Fundamental.
+        Distribui de forma equilibrada entre Saúde e Educação.
+        Adm Geral = 24,75% → dentro do razoável.
+    
+    MACEIÓ:
+        Concentra 36,41% em Assistência Hospitalar.
+        Isso pode indicar que o sistema de saúde local
+        demanda mais recursos hospitalares — não
+        necessariamente ineficiência, mas um padrão
+        diferente de necessidade da população.
+        Ensino Fundamental = apenas 14,84%.
+    
+    NATAL:
+        Gasta 27,00% em Administração Geral.
+        Isso indica possível INEFICIÊNCIA ADMINISTRATIVA —
+        dinheiro indo para custos fixos e estrutura
+        burocrática em vez de serviços diretos à população.
+        Isso explica (em parte) por que Natal é a pior.
+
+════════════════════════════════════════════════════════════════
+PERGUNTA 4 — Consistência: Maceió oscila muito?
+════════════════════════════════════════════════════════════════
+
+    Calculamos o CV das taxas anuais de 2020 a 2024:
+        CV = (DP das 5 taxas anuais ÷ Média das 5 taxas) × 100
+    
+    Por que CV e não DP aqui?
+        Goiânia opera em torno de 98% ao ano.
+        Natal opera em torno de 83% ao ano.
+        Um DP de 3% impacta muito diferente nos dois casos.
+        O CV normaliza isso dividindo pelo patamar de cada
+        capital — comparação justa.
+    
+    Classificação:
+        CV < 5%  → consistente (pouca oscilação)
+        CV 5-10% → oscilação moderada
+        CV > 10% → oscilante (varia muito entre anos)
+    
+    RESULTADOS:
+        Goiânia:  CV baixo → muito consistente
+        Maceió:   CV médio → moderadamente consistente
+        Natal:    CV alto  → oscila bastante entre anos
+    
+    Consistência por % de funções acima da média:
+        Goiânia: 81,82% das funções acima da média
+        Maceió:  68,42% das funções acima da média
+        Natal:   ~45%   das funções acima da média
+
+SE O GESTOR PERGUNTAR "Maceió é boa ou ruim em Educação?":
+    Maceió não aparece no Top 10 de Educação.
+    Goiânia aloca 26,14% do gasto total em Ensino Fundamental.
+    Maceió aloca apenas 14,84% — quase metade.
+    Isso indica que Maceió poderia melhorar em Educação
+    redistributindo parte do orçamento hospitalar para
+    Ensino Fundamental e Educação Infantil, seguindo
+    o modelo de Goiânia.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 7 — A RESPOSTA FINAL: O QUE DESCOBRIMOS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Voltando à pergunta central: COMO as capitais gastam?
+
+1. PADRÃO NACIONAL:
+   A maioria das capitais executa entre 85% e 98%.
+   Média nacional = 92,41%.
+   Existem 3 funções com outliers que distorcem a média
+   (Ciência e Tecnologia, Relações Exteriores, Trabalho).
+   Nessas, a mediana é mais confiável.
+
+2. COMPORTAMENTO DE MACEIÓ:
+   → Está em 8º lugar (94,28%), ACIMA da média nacional.
+   → Em Saúde: excelente (4º lugar, 97,91%).
+   → Em Educação: fora do Top 10 — ponto de melhoria.
+   → Concentra 36,41% do gasto em Assistência Hospitalar.
+   → Melhorou levemente ao longo dos 5 anos.
+   → Consistência moderada (68,42% das funções acima da média).
+
+3. O QUE A MELHOR CAPITAL (GOIÂNIA) FAZ DIFERENTE:
+   → Distribui melhor entre Educação e Saúde.
+   → Investe 26,14% em Ensino Fundamental.
+   → Mantém equilíbrio entre as áreas.
+   → É consistente ao longo dos anos (CV baixo).
+   → Está em 81,82% das funções acima da média.
+
+4. O QUE A PIOR CAPITAL (NATAL) FAZ DE ERRADO:
+   → Gasta 27% em Administração Geral (muito alto).
+   → Possível ineficiência burocrática.
+   → Dinheiro vai para custos fixos em vez de serviços.
+   → Taxa de 83,60% — deixa 16,4% do empenhado sem pagar.
+   → Oscila bastante entre anos (CV alto).
+
+5. CONCLUSÃO — A RESPOSTA COMPLETA:
+
+   A eficiência da execução orçamentária não é apenas
+   "pagar o que empenhou". É sobre COMO o dinheiro é
+   distribuído entre as funções.
+   
+   Goiânia é eficiente porque distribui bem e mantém
+   esse padrão ao longo dos anos.
+   
+   Natal é ineficiente porque concentra demais em
+   administração — dinheiro que deveria ir para saúde
+   e educação fica preso em custos burocráticos.
+   
+   Maceió está no caminho certo (8º lugar, acima da
+   média) mas pode melhorar em Educação, onde está
+   claramente abaixo do seu potencial comparada com
+   Goiânia.
+   
+   O caminho de Maceió para melhorar:
+   → Manter a força em Saúde (já está bem).
+   → Aumentar investimento em Ensino Fundamental.
+   → Reduzir concentração em Assistência Hospitalar.
+   → Monitorar Administração Geral para não seguir
+     o caminho de Natal.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE 8 — RESPOSTAS PRONTAS PARA O GESTOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"Por que você excluiu 2025?"
+    2025 tem dados de apenas 11 capitais. Incluir um ano
+    incompleto distorceria qualquer comparação — seria
+    como avaliar um time que jogou 6 partidas contra outro
+    que jogou apenas 3. Excluímos para garantir comparações
+    justas entre todos os anos do período.
+
+"Por que a Taxa Geral não é média simples das taxas por função?"
+    Porque média simples dá peso igual para todas as funções.
+    Uma função com R$ 5 milhões não pode ter o mesmo peso
+    que uma com R$ 1 bilhão. A soma total ponderada —
+    Σ Pago ÷ Σ Empenhado — resolve isso automaticamente:
+    funções maiores influenciam mais o resultado, que é
+    exatamente o que faz sentido economicamente.
+
+"O que é Coeficiente de Variação e por que você usou?"
+    CV é o desvio padrão dividido pela média, multiplicado
+    por 100. Ele transforma a dispersão em um percentual
+    relativo ao próprio nível médio da variável. Usamos
+    porque permite comparar a desigualdade entre funções
+    com médias muito diferentes — o que o desvio padrão
+    absoluto não consegue fazer de forma justa.
+
+"Por que Maceió está em 8º e não em 1º?"
+    Porque a Taxa Geral de Maceió é 94,28%, calculada como
+    a soma de tudo que foi pago dividida por tudo que foi
+    empenhado de 2020 a 2024. Outras capitais como Goiânia
+    (98,06%) e Recife têm taxas superiores, indicando que
+    pagaram uma proporção maior do que comprometeram. Mas
+    Maceió está 1,87 pp acima da média nacional (92,41%),
+    o que é um resultado positivo.
+
+"Onde Maceió pode melhorar?"
+    Em Educação. Maceió não aparece no Top 10 da função.
+    Goiânia aloca 26,14% do gasto total em Ensino
+    Fundamental — Maceió aloca apenas 14,84%. Esse é o
+    principal gap. Reduzir a concentração em Assistência
+    Hospitalar (36,41%) e redistribuir para Educação Básica
+    seria o caminho mais próximo do padrão de Goiânia.
+
+"Por que você usou DuckDB e Parquet?"
+    DuckDB permite escrever SQL diretamente em cima dos
+    arquivos Parquet sem precisar carregar tudo na memória.
+    Parquet é um formato colunar — lê muito mais rápido
+    que CSV porque acessa só as colunas necessárias para
+    cada consulta. Juntos, permitem consultar milhões de
+    registros em segundos no próprio notebook.
+
+"O que são Restos a Pagar?"
+    Quando uma prefeitura empenha mas não paga dentro do
+    mesmo ano, o valor fica como "Resto a Pagar" — uma
+    dívida reconhecida que será paga no(s) ano(s) seguinte(s).
+    Por isso a taxa de execução pode passar de 100% em
+    alguns casos: a prefeitura pagou dívidas do ano anterior
+    além do que empenhou no ano corrente.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESUMO ULTRA-RÁPIDO — SE TIVER 2 MINUTOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    OBJETIVO:   Comparar eficiência de gasto público entre
+                26 capitais brasileiras (2020-2024).
+
+    FÓRMULA:    Taxa = Pago ÷ Empenhado × 100
+
+    RESULTADO:  702 taxas (26 capitais × 27 funções)
+
+    ESTATÍSTICA: Média, mediana, desvio padrão, CV
+                 por função → encontrar padrões e outliers
+
+    CASOS:      Goiânia (98,06%) × Maceió (94,28%) × Natal (83,60%)
+
+    MACEIÓ:     8º lugar. Forte em Saúde. Fraca em Educação.
+                Concentra 36% em Assistência Hospitalar.
+                Acima da média. Caminho: aprender com Goiânia.
+
+    GOIÂNIA:    Investe mais em Educação (26% Ensino Fundamental).
+                Distribui melhor. Consistente ao longo dos anos.
+
+    NATAL:      Gasta 27% em Administração. Menos em serviços.
+                Oscila entre anos. Abaixo da média.
+
+================================================================================
+                         FIM DO DOCUMENTO
+================================================================================
