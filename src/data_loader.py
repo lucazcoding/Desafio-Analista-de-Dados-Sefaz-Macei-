@@ -1,6 +1,7 @@
 import zipfile
 from pathlib import Path
 import pandas as pd
+# pyrefly: ignore [missing-import]
 import duckdb
 from src.data_transformer import descobrir_ano, limpar_e_transformar_df
 
