@@ -87,7 +87,7 @@ Verificar se a baixa execucao em funcoes criticas (Urbanismo e Habitacao) e um p
 | 1 | Fortaleza | 97,03% |
 | 2 | Boa Vista | 96,98% |
 | 3 | Salvador | 96,43% |
-| 15 | **Maceio** | **89,66%** |
+| 16 | **Maceio** | **89,66%** |
 | 25 | Sao Luis | 78,33% |
 | 26 | **Natal** | **78,01%** |
 
