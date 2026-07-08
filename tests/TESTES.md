@@ -10,7 +10,7 @@ validam que o pipeline continua se comportando como esperado.
 ## Como rodar
 
 ```bash
-.\venv\Scripts\pytest tests\test_transform.py -v
+(venv)pytest tests/ -v  
 ```
 
 > ⚠️ **Importante — conflito de conexão com o DuckDB**
