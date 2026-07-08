@@ -142,6 +142,11 @@ pip install notebook        # Jupyter Notebook (necessario para rodar os noteboo
 
 instale a extensao **Jupyter** no VS Code
 navegue ate os arquivos .ipynb
+
+Ao ter a extensão instalada voce verá o arquivo ipynb no notebook
+voce pode clicar em Run ou Run ALL para rodar todos ele irá solicitar que 
+voce escolha o kernel selecione pelo nosso ambiente venv(Python) para kernel.
+
 1-Preparar_Dataset.ipynb
 2-Analise.ipynb
 
