@@ -133,6 +133,9 @@ Natal aparece de forma consistente entre os piores desempenhos do ranking nas du
 ```bash
 python -m venv venv
 venv\Scripts\activate      # Windows
+pip install ipykernel
+python -m ipykernel install --user --name=venv --display-name "Python (venv - Sefaz)"
+
 pip install -r requirements.txt
 pip install notebook        # Jupyter Notebook (necessario para rodar os notebooks)
 
