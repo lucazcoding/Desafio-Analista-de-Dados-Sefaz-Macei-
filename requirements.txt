@@ -4,3 +4,4 @@ duckdb
 matplotlib
 notebook
 pytest
+ipykernel
