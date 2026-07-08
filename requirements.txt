@@ -3,3 +3,4 @@ pyarrow
 duckdb
 matplotlib
 notebook
+pytest
