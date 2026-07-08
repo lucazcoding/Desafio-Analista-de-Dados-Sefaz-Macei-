@@ -20,6 +20,7 @@ Investigar como as 26 capitais brasileiras executam o orcamento publico — de t
 - **Pandas** — Manipulacao de dados
 - **Matplotlib** — Visualizacoes
 - **PyArrow/Parquet** — Armazenamento
+- **Pytest** — Testes automatizados de sanidade e reconciliação dos dados
 
 ## Estrutura do projeto
 
@@ -30,11 +31,14 @@ Desafio-Analista-de-Dados-Sefaz-Macei-
 │   ├── 1-Preparar_Dataset.ipynb   # ETL (rodar primeiro)
 │   └── 2-Analise.ipynb            # Analise completa
 ├── src/
-│   ├── banco/
-│   │   ├── conexao_duckdb.py
-│   │   └── criar_tabela.py
+│   ├── data_loader.py       # Extração de ZIPs, leitura/consolidação de CSVs, persistência
+│   ├── data_transformer.py  # classificar_conta, descobrir_ano, limpeza dos dados
+│   ├── metrics.py           # Consultas de ranking e taxas de execução (Saúde, Educação, Natal)
 │   └── utils/
-│       └── constantes.py
+│       └── constantes.py    # Caminhos (CAMINHO_PARQUET, CAMINHO_DUCKDB)
+├── tests/
+│   └── test_transform.py    # Testes de sanidade e reconciliação dos dados
+├── TESTES.md                 # Documentação detalhada dos testes
 ├── dados_compactos/
 ├── dados_extraidos/
 ├── data/processed/
@@ -138,6 +142,19 @@ navegue ate os arquivos .ipynb
 2-Analise.ipynb
 
 ```
+
+## Como rodar os testes
+
+Após rodar `1-Preparar_Dataset.ipynb` pelo menos uma vez (os testes leem
+o parquet e o DuckDB já processados):
+ 
+Para testar no terminal: python -m pytest .\tests\test_transform.py
+> ⚠️ Se o notebook `2-Analise.ipynb` estiver aberto com a conexão DuckDB
+> ativa, feche-a (`con.close()`) ou reinicie o kernel antes de rodar os
+> testes — o DuckDB permite apenas uma conexão de escrita por vez no
+> mesmo arquivo.
+Detalhes de cada teste (o que verifica e por quê) estão documentados em
+[`TESTES.md`](./TESTES.md).
 
 > **Nota:** Se o comando `jupyter` nao for reconhecido, execute `pip install notebook` antes de tentar novamente. Para facilitar a execucao dos notebooks, instale a extensao **Jupyter** no VS Code (busque por "Jupyter" nas extensoes e instale a da Microsoft).
 
