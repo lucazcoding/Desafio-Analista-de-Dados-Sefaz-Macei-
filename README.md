@@ -21,6 +21,7 @@ Investigar como as 26 capitais brasileiras executam o orcamento publico — de t
 - **Matplotlib** — Visualizacoes
 - **PyArrow/Parquet** — Armazenamento
 - **Pytest** — Testes automatizados de sanidade e reconciliação dos dados
+- **ipykernel** — Jupyter Notebook kernel
 
 ## Estrutura do projeto
 
